@@ -1098,6 +1098,8 @@ hsSubmitBtn.addEventListener('click', async () => {
 
 /* ===================== GAME CONSTANTS ===================== */
 const BOMB_THRESHOLD = 7;
+const TIMER_BONUS_THRESHOLD = 15;
+const TIMER_BONUS_SECONDS = 5;
 const GAME_TIME = 60;
 const FEVER_DURATION = 7;
 
@@ -1406,6 +1408,13 @@ function floatScoreAtXY(x,y,text){
   boardEl.appendChild(fs);
   setTimeout(()=>fs.remove(), 720);
 }
+function grantTimerBonusIfHuge(count, x, y){
+  if(count < TIMER_BONUS_THRESHOLD) return;
+  timeLeft += TIMER_BONUS_SECONDS;
+  timeValEl.textContent = String(timeLeft);
+  playSE('bell');
+  floatScoreAtXY(x + 26, y - 16, `+${TIMER_BONUS_SECONDS}秒`);
+}
 function bumpCombo(){
   combo++;
   if(combo>maxCombo) maxCombo = combo;
@@ -1543,6 +1552,7 @@ function resolveClear(cleared){
 
   const makeBomb = cleared.length >= BOMB_THRESHOLD;
   const bombX = last.x, bombY = last.y;
+  grantTimerBonusIfHuge(cleared.length, last.x, last.y);
 
   setTimeout(()=>{
     removeBalls(cleared);
@@ -1568,6 +1578,7 @@ function explodeBomb(bomb){
   affected.forEach(b => { b.clearing=true; b.el.classList.add('popping'); });
   bomb.clearing = true; bomb.el.classList.add('popping');
   addFever(affected.length*3);
+  grantTimerBonusIfHuge(affected.length, bomb.x, bomb.y);
   setTimeout(()=>{
     const removed = affected.concat([bomb]);
     removeBalls(removed);
@@ -1636,15 +1647,15 @@ function useSkill(){
     // 周囲のツムをまとめて消す: clear everything within a radius of a random point in the pile
     const pool = allActiveBalls();
     const anchor = pool[Math.floor(Math.random()*pool.length)] || {x:boxW/2, y:boxH/2};
-    const blastR = (2+level) * BASE_R * 1.15;
+    const blastR = (3+level) * BASE_R * 1.3;
     const targets = pool.filter(b => Math.hypot(b.x-anchor.x, b.y-anchor.y) <= blastR);
-    skillClearBalls(targets, 15);
+    skillClearBalls(targets, 18);
   } else if(id===1){
     // ランダムに大量のツムを消す
-    const n = 8 + level*4;
+    const n = 14 + level*6;
     const all = allActiveBalls();
     shuffleArr(all);
-    skillClearBalls(all.slice(0, Math.min(n, all.length)), 12);
+    skillClearBalls(all.slice(0, Math.min(n, all.length)), 14);
   } else if(id===2){
     // 特定のツムに変化させる -> convert random tsums to the active type (doesn't clear)
     const n = 10 + level*3;
@@ -1661,14 +1672,14 @@ function useSkill(){
     if(targets[0]) floatScoreAtXY(targets[0].x, targets[0].y, 'チェンジ!');
   } else if(id===3){
     // 時間を延長する
-    const add = 5 + level*2;
+    const add = 8 + level*3;
     timeLeft += add;
     timeValEl.textContent = String(timeLeft);
     floatScoreAtXY(boxW/2, 40, '+'+add+'秒');
     playSE('bell');
   } else if(id===4){
     // ランダムにボムを発生させる: swap random tsums in place for bombs
-    const count = 2 + level;
+    const count = 3 + level*2;
     const all = allActiveBalls();
     shuffleArr(all);
     const targets = all.slice(0, Math.min(count, all.length));
@@ -1686,14 +1697,14 @@ function useSkill(){
     if(all.length>0){
       const types = [...new Set(all.map(b=>b.type))];
       shuffleArr(types);
-      const typesToClear = Math.min(types.length, 1 + Math.floor((level-1)/2));
+      const typesToClear = Math.min(types.length, 1 + Math.ceil(level/2));
       const chosenTypes = types.slice(0, typesToClear);
       const targets = all.filter(b=>chosenTypes.includes(b.type));
-      skillClearBalls(targets, 14);
+      skillClearBalls(targets, 16);
     }
   } else if(id===6){
     // 一定時間、スコア獲得量が2倍になる
-    const dur = 6 + level*2;
+    const dur = 9 + level*3;
     scoreBoostActive = true;
     clearTimeout(scoreBoostTimeout);
     scoreBoostTimeout = setTimeout(()=>{ scoreBoostActive = false; }, dur*1000);
@@ -1704,15 +1715,25 @@ function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.r
 
 function skillClearBalls(targets, per){
   if(targets.length===0) return;
-  const mult = feverActive?2:1;
+  const mult = feverActive ? 2 : (1 + Math.min(combo,10)*0.15);
   const gained = addScore(targets.length*per, mult);
   tilesCleared += targets.length;
+  for(let i=0; i<targets.length; i++) bumpCombo(); // treat each cleared tsum as its own chain step
   addFever(targets.length*2);
   targets.forEach(b=>{ b.clearing=true; b.el.classList.add('popping'); });
-  if(targets[0]) floatScoreAtXY(targets[0].x, targets[0].y, '+'+gained);
+  const last = targets[targets.length-1];
+  const lx = last ? last.x : boxW/2, ly = last ? last.y : 40;
+  if(last) floatScoreAtXY(lx, ly, '+'+gained);
+  grantTimerBonusIfHuge(targets.length, lx, ly);
+  const makeBomb = targets.length >= BOMB_THRESHOLD;
   setTimeout(()=>{
     removeBalls(targets);
-    refillBalls(targets.length);
+    if(makeBomb){
+      createBall(-1, lx, Math.max(BASE_R, ly), 0, 0, true);
+      refillBalls(targets.length-1);
+    } else {
+      refillBalls(targets.length);
+    }
   }, 170);
 }
 
