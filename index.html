@@ -138,6 +138,7 @@
   .char-lv{ font-size:10px; color:var(--pink-deep); font-weight:800; white-space:nowrap; }
   .char-skill-name{ font-size:10.5px; font-weight:800; color:var(--gold-deep); margin-top:2px; }
   .char-skill-desc{ font-size:10.5px; color:#a58a76; line-height:1.35; margin-top:1px; }
+  .char-level-desc{ font-size:9.5px; color:#3aa7a9; line-height:1.35; margin-top:2px; font-weight:700; }
 
   .big-btn{
     display:block; width:100%; text-align:center;
@@ -503,19 +504,26 @@ const IMG_tsum6_steelkon="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAADw
 /* ===================== CHARACTER DEFINITIONS ===================== */
 const CHARS = [
   { id:0, name:"コン狐",       img: IMG_tsum0_blue,      color:"#a8dcf0",
-    skillName:"まわりドカン",   skillDesc:"周囲のツムをまとめて消す" },
+    skillName:"まわりドカン",   skillDesc:"周囲のツムをまとめて消す",
+    levelDesc:"Lv.が上がるほど、まとめて消せる範囲が広がる" },
   { id:1, name:"エゾモモンガ", img: IMG_tsum1_gray,      color:"#cfc7c2",
-    skillName:"ラッキークリア", skillDesc:"ランダムに大量のツムを消す" },
+    skillName:"ラッキークリア", skillDesc:"ランダムに大量のツムを消す",
+    levelDesc:"Lv.が上がるほど、消えるツムの数が増える" },
   { id:2, name:"コーギー",     img: IMG_tsum2_yellow,    color:"#ffe27a",
-    skillName:"チェンジ変化",   skillDesc:"特定のツムに変化させる" },
+    skillName:"チェンジ変化",   skillDesc:"特定のツムに変化させる",
+    levelDesc:"Lv.が上がるほど、変化するツムの数が増える" },
   { id:3, name:"アイビー",     img: IMG_tsum3_cream,     color:"#f3e6d0",
-    skillName:"タイムのばし",   skillDesc:"時間を延長する" },
+    skillName:"タイムのばし",   skillDesc:"時間を延長する",
+    levelDesc:"Lv.が上がるほど、延長できる時間が長くなる" },
   { id:4, name:"コーギー狐",   img: IMG_tsum4_corgikon,  color:"#ffc98a",
-    skillName:"ボム発生",       skillDesc:"ランダムにボムを発生させる" },
+    skillName:"ボム発生",       skillDesc:"ランダムにボムを発生させる",
+    levelDesc:"Lv.が上がるほど、発生するボムの数が増える" },
   { id:5, name:"すずおライオン", img: IMG_tsum5_suzuo,   color:"#fff1a8",
-    skillName:"ひまわり全消し", skillDesc:"盤面にある同じ種類のツムを全て消す" },
+    skillName:"ひまわり全消し", skillDesc:"盤面にある同じ種類のツムを全て消す",
+    levelDesc:"Lv.が上がるほど、同時に消せるツムの種類数が増える" },
   { id:6, name:"鋼のコン狐",   img: IMG_tsum6_steelkon,  color:"#c9d6e0",
-    skillName:"鋼の加護",       skillDesc:"一定時間、スコア獲得量が2倍になる" },
+    skillName:"鋼の加護",       skillDesc:"一定時間、スコア獲得量が2倍になる",
+    levelDesc:"Lv.が上がるほど、2倍になる時間が長くなる" },
 ];
 
 /* ===================== SAVE DATA ===================== */
@@ -718,6 +726,7 @@ function renderHome(){
         </div>
         <div class="char-skill-name">スキル: ${c.skillName}</div>
         <div class="char-skill-desc">${c.skillDesc}</div>
+        <div class="char-level-desc">📈 ${c.levelDesc}</div>
       </div>
     `;
     if(owned){
@@ -1571,12 +1580,14 @@ function useSkill(){
     addScore(targets.length*10, feverActive?2:1);
     if(targets[0]) floatScoreAtXY(targets[0].x, targets[0].y, 'ボム発生!');
   } else if(id===5){
-    // 盤面にある同じ種類のツムを全て消す
+    // 盤面にある同じ種類のツムを全て消す(Lv.が上がるほど、同時に消せる種類数が増える)
     const all = allActiveBalls();
     if(all.length>0){
       const types = [...new Set(all.map(b=>b.type))];
-      const targetType = types[Math.floor(Math.random()*types.length)];
-      const targets = all.filter(b=>b.type===targetType);
+      shuffleArr(types);
+      const typesToClear = Math.min(types.length, 1 + Math.floor((level-1)/2));
+      const chosenTypes = types.slice(0, typesToClear);
+      const targets = all.filter(b=>chosenTypes.includes(b.type));
       skillClearBalls(targets, 14);
     }
   } else if(id===6){
