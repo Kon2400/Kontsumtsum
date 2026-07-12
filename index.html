@@ -150,7 +150,29 @@
   .big-btn:active{ transform:translateY(4px); box-shadow:0 1px 0 rgba(0,0,0,0.15); }
   .btn-play{ background:linear-gradient(180deg,#ff9dbb,var(--pink-deep)); margin-top:6px;}
   .btn-gacha{ background:linear-gradient(180deg,#ffd984,var(--gold-deep)); margin-top:10px;}
+  .btn-rank{ background:linear-gradient(180deg,#9adfe0,#3aa7a9); margin-top:10px;}
   .gacha-cost{ font-size:12px; font-weight:700; opacity:0.9;}
+
+  .rank-submit-row{ margin-top:16px; text-align:center; }
+  #playerNameInput{
+    width:100%; padding:9px 12px; border-radius:10px; border:2px solid #f1e6da;
+    font-size:14px; text-align:center; font-family:inherit; box-sizing:border-box;
+  }
+  #playerNameInput:focus{ outline:none; border-color:var(--pink); }
+  .submit-status{ font-size:11.5px; color:#a58a76; margin-top:6px; min-height:14px; font-weight:700; }
+  .submit-status.ok{ color:#3aa7a9; }
+  .submit-status.err{ color:#ff5d8f; }
+
+  .rank-status-note{ font-size:10.5px; color:#a58a76; text-align:center; margin-bottom:6px; }
+  .rank-list{ max-height:320px; overflow-y:auto; text-align:left; }
+  .rank-row{
+    display:flex; align-items:center; gap:8px; padding:7px 4px;
+    border-bottom:1px dashed #eee; font-size:13px;
+  }
+  .rank-row .rank-num{ width:24px; font-weight:900; color:var(--pink-deep); flex:0 0 auto; text-align:center; }
+  .rank-row .rank-name{ flex:1 1 auto; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rank-row .rank-score{ font-weight:900; color:var(--gold-deep); flex:0 0 auto; }
+  .rank-empty{ text-align:center; font-size:12px; color:#b09a89; padding:20px 0; }
 
   .home-footer-note{
     text-align:center; font-size:10.5px; color:#b09a89; margin-top:auto; padding-top:14px; line-height:1.6;
@@ -182,14 +204,22 @@
   #skillFill{ background:linear-gradient(90deg,#bfe6ff,#4fb3e8); }
 
   #boardWrap{ position:relative; }
+  #shuffleBtn{
+    position:absolute; right:10px; bottom:10px; z-index:2000;
+    width:44px; height:44px; border-radius:50%; border:none;
+    background:rgba(255,255,255,0.92); box-shadow:var(--card-shadow);
+    font-size:19px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  #shuffleBtn:disabled{ opacity:0.4; cursor:default; }
   #skillWidget{
-    width:100%; max-width:220px; margin:2px auto 0;
+    width:100%; max-width:380px; margin:2px auto 0;
     background:#fff; border-radius:12px;
     padding:6px 10px; box-shadow:var(--card-shadow);
   }
   #skillBtn{
-    margin-top:4px; width:100%; border:none; border-radius:8px; padding:5px;
-    font-size:11px; font-weight:800; color:#fff; background:#cfcfd6;
+    margin-top:4px; width:100%; border:none; border-radius:8px; padding:9px;
+    font-size:13px; font-weight:800; color:#fff; background:#cfcfd6;
     box-shadow:0 3px 0 rgba(0,0,0,0.12);
   }
   #skillBtn.ready{ background:linear-gradient(180deg,#7fd0ff,#2f9fe0); cursor:pointer; }
@@ -266,7 +296,7 @@
   .coin-gain{ display:flex; align-items:center; justify-content:center; gap:6px; margin-top:14px; font-size:16px; font-weight:900; color:var(--gold-deep);}
 
   /* ---------- Gacha modal ---------- */
-  #gachaModal, #settingsModal{
+  #gachaModal, #settingsModal, #rankModal, #hsSubmitModal{
     position:fixed; inset:0; background:rgba(60,40,40,0.55);
     display:flex; align-items:center; justify-content:center; z-index:50;
   }
@@ -314,6 +344,8 @@
 
     <button class="big-btn btn-play" id="playBtn">プレイ スタート (60秒)</button>
     <button class="big-btn btn-gacha" id="gachaBtn">ガチャガチャを ひく <span class="gacha-cost">(100コイン)</span></button>
+    <button class="big-btn btn-rank" id="rankBtn">🏆 ランキングを見る</button>
+    <button class="big-btn btn-rank" id="submitHighScoreBtn" style="margin-top:8px;">ハイスコアを登録する</button>
 
     <div class="home-footer-note">ゲームで コインを かせいで<br>あたらしい ツムを ガチャで ゲットしよう!</div>
   </div>
@@ -331,6 +363,7 @@
     </div>
     <div id="boardWrap">
       <div id="board"></div>
+      <button id="shuffleBtn" aria-label="シャッフル">🔀</button>
     </div>
     <div id="skillWidget">
       <div class="gauge-title"><span id="skillLabel">スキル</span></div>
@@ -348,7 +381,14 @@
       <div class="result-row"><span>さいだいコンボ</span><span class="v" id="resCombo">0</span></div>
       <div class="result-row"><span>けしたツム数</span><span class="v" id="resTiles">0</span></div>
       <div class="coin-gain"><span class="coin-dot"></span><span id="resCoin">+0</span> コイン獲得</div>
-      <button class="big-btn btn-play" id="backHomeBtn" style="margin-top:20px;">ホームへ もどる</button>
+
+      <div class="rank-submit-row">
+        <input type="text" id="playerNameInput" placeholder="なまえを入力" maxlength="10">
+        <button class="big-btn btn-rank" id="submitScoreBtn" style="margin-top:8px;">ランキングに登録する</button>
+        <div id="submitStatus" class="submit-status"></div>
+      </div>
+
+      <button class="big-btn btn-play" id="backHomeBtn" style="margin-top:14px;">ホームへ もどる</button>
     </div>
   </div>
 
@@ -370,6 +410,30 @@
       <input type="range" id="seVolSlider" min="0" max="100" value="80">
     </div>
     <button class="big-btn btn-play" id="settingsCloseBtn" style="margin-top:18px;">とじる</button>
+  </div>
+</div>
+
+<div id="rankModal" class="hidden">
+  <div class="gacha-card" style="max-width:320px;">
+    <div class="result-title" style="margin-bottom:10px;">🏆 ランキング</div>
+    <div id="rankStatusNote" class="rank-status-note"></div>
+    <div id="rankList" class="rank-list"></div>
+    <button class="big-btn btn-play" id="rankCloseBtn" style="margin-top:16px;">とじる</button>
+  </div>
+</div>
+
+<div id="hsSubmitModal" class="hidden">
+  <div class="gacha-card" style="max-width:300px;">
+    <div class="result-title" style="margin-bottom:10px;">ハイスコアを登録</div>
+    <div class="result-row" style="border:none; justify-content:center; gap:6px;">
+      <span>あなたのハイスコア:</span><span class="v" id="hsValueDisp">0</span>
+    </div>
+    <div class="rank-submit-row">
+      <input type="text" id="hsNameInput" placeholder="なまえを入力" maxlength="10">
+      <button class="big-btn btn-rank" id="hsSubmitBtn" style="margin-top:8px;">登録する</button>
+      <div id="hsSubmitStatus" class="submit-status"></div>
+    </div>
+    <button class="big-btn btn-play" id="hsCloseBtn" style="margin-top:10px;">とじる</button>
   </div>
 </div>
 
@@ -408,7 +472,8 @@ let save = {
   active: 0,
   highScore: 0,
   bgmVolume: 0.6,
-  seVolume: 0.8
+  seVolume: 0.8,
+  playerName: ''
 };
 
 async function loadSave(){
@@ -425,6 +490,7 @@ async function loadSave(){
   if(typeof save.highScore !== 'number') save.highScore = 0;
   if(typeof save.bgmVolume !== 'number') save.bgmVolume = 0.6;
   if(typeof save.seVolume !== 'number') save.seVolume = 0.8;
+  if(typeof save.playerName !== 'string') save.playerName = '';
   if(typeof save.active !== 'number' || !save.owned[save.active]) save.active = 0;
 }
 async function persistSave(){
@@ -543,6 +609,8 @@ function playSE(name){
     tone(0,523,0.22,'square',0.35); tone(0.1,659,0.22,'square',0.35); tone(0.2,784,0.25,'square',0.35);
   } else if(name==='bell'){
     tone(0,1046,0.4,'sine',0.3);
+  } else if(name==='shuffle'){
+    tone(0,300,0.12,'triangle',0.3); tone(0.06,450,0.12,'triangle',0.3); tone(0.12,650,0.16,'triangle',0.32);
   }
 }
 
@@ -663,6 +731,150 @@ seVolSlider.addEventListener('input', () => {
   updateVolumes();
 });
 seVolSlider.addEventListener('change', () => playSE('button'));
+
+/* ===================== LEADERBOARD (Firebase Realtime Database) =====================
+   Uses the Firebase Realtime Database REST API directly via fetch() - no SDK needed.
+   This works on any static host (GitHub Pages, Netlify, etc.) as well as inside Claude,
+   since it's a real shared backend rather than the local/Claude-only storage API. */
+const FIREBASE_DB_URL = "https://tsumtsum-ranking-default-rtdb.firebaseio.com";
+const LEADERBOARD_MAX = 50;
+
+async function fetchLeaderboard(){
+  try{
+    const res = await fetch(`${FIREBASE_DB_URL}/scores.json`);
+    if(!res.ok) throw new Error('bad response');
+    const data = await res.json();
+    if(!data) return [];
+    const list = Object.values(data).filter(e => e && typeof e.score === 'number');
+    list.sort((a,b)=>b.score-a.score);
+    return list.slice(0, LEADERBOARD_MAX);
+  }catch(e){
+    return null; // signals a connection/setup failure
+  }
+}
+async function submitScoreToLeaderboard(name, scoreVal){
+  try{
+    const res = await fetch(`${FIREBASE_DB_URL}/scores.json`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, score: scoreVal, ts: Date.now() })
+    });
+    return res.ok;
+  }catch(e){
+    return false;
+  }
+}
+
+const rankBtn = document.getElementById('rankBtn');
+const rankModal = document.getElementById('rankModal');
+const rankList = document.getElementById('rankList');
+const rankStatusNote = document.getElementById('rankStatusNote');
+const rankCloseBtn = document.getElementById('rankCloseBtn');
+
+function renderRankList(list){
+  if(!list || list.length===0){
+    rankList.innerHTML = '<div class="rank-empty">まだ登録がありません<br>最初の1件を登録してみよう!</div>';
+    return;
+  }
+  rankList.innerHTML = list.map((e,i)=>`
+    <div class="rank-row">
+      <span class="rank-num">${i+1}</span>
+      <span class="rank-name">${escapeHtml(e.name||'名無し')}</span>
+      <span class="rank-score">${e.score.toLocaleString()}</span>
+    </div>
+  `).join('');
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+rankBtn.addEventListener('click', async () => {
+  playSE('button');
+  rankModal.classList.remove('hidden');
+  rankList.innerHTML = '<div class="rank-empty">読み込み中...</div>';
+  rankStatusNote.textContent = '';
+  const list = await fetchLeaderboard();
+  if(list === null){
+    rankStatusNote.textContent = 'ランキングの読み込みに失敗しました。通信環境をご確認ください。';
+    renderRankList([]);
+  } else {
+    renderRankList(list);
+  }
+});
+rankCloseBtn.addEventListener('click', () => {
+  playSE('button');
+  rankModal.classList.add('hidden');
+});
+
+const playerNameInput = document.getElementById('playerNameInput');
+const submitScoreBtn = document.getElementById('submitScoreBtn');
+const submitStatus = document.getElementById('submitStatus');
+
+submitScoreBtn.addEventListener('click', async () => {
+  playSE('button');
+  const name = (playerNameInput.value || '').trim().slice(0,10);
+  if(!name){
+    submitStatus.textContent = 'なまえを入力してください';
+    submitStatus.className = 'submit-status err';
+    return;
+  }
+  save.playerName = name;
+  persistSave();
+  submitStatus.textContent = '送信中...';
+  submitStatus.className = 'submit-status';
+  const ok = await submitScoreToLeaderboard(name, score);
+  if(ok){
+    submitStatus.textContent = 'ランキングに登録しました!';
+    submitStatus.className = 'submit-status ok';
+  } else {
+    submitStatus.textContent = '登録に失敗しました。通信環境をご確認のうえ、もう一度お試しください。';
+    submitStatus.className = 'submit-status err';
+  }
+});
+
+/* ---- Home-screen high-score submission ---- */
+const submitHighScoreBtn = document.getElementById('submitHighScoreBtn');
+const hsSubmitModal = document.getElementById('hsSubmitModal');
+const hsValueDisp = document.getElementById('hsValueDisp');
+const hsNameInput = document.getElementById('hsNameInput');
+const hsSubmitBtn = document.getElementById('hsSubmitBtn');
+const hsSubmitStatus = document.getElementById('hsSubmitStatus');
+const hsCloseBtn = document.getElementById('hsCloseBtn');
+
+submitHighScoreBtn.addEventListener('click', () => {
+  ensureAudio();
+  playSE('button');
+  hsValueDisp.textContent = save.highScore.toLocaleString();
+  hsNameInput.value = save.playerName || '';
+  hsSubmitStatus.textContent = '';
+  hsSubmitStatus.className = 'submit-status';
+  hsSubmitModal.classList.remove('hidden');
+});
+hsCloseBtn.addEventListener('click', () => {
+  playSE('button');
+  hsSubmitModal.classList.add('hidden');
+});
+hsSubmitBtn.addEventListener('click', async () => {
+  playSE('button');
+  const name = (hsNameInput.value || '').trim().slice(0,10);
+  if(!name){
+    hsSubmitStatus.textContent = 'なまえを入力してください';
+    hsSubmitStatus.className = 'submit-status err';
+    return;
+  }
+  save.playerName = name;
+  persistSave();
+  hsSubmitStatus.textContent = '送信中...';
+  hsSubmitStatus.className = 'submit-status';
+  const ok = await submitScoreToLeaderboard(name, save.highScore);
+  if(ok){
+    hsSubmitStatus.textContent = 'ランキングに登録しました!';
+    hsSubmitStatus.className = 'submit-status ok';
+  } else {
+    hsSubmitStatus.textContent = '登録に失敗しました。通信環境をご確認のうえ、もう一度お試しください。';
+    hsSubmitStatus.className = 'submit-status err';
+  }
+});
 
 /* ===================== GAME CONSTANTS ===================== */
 const BOMB_THRESHOLD = 7;
@@ -873,6 +1085,8 @@ function resetHud(){
   skillBtnEl.disabled = true;
   skillBtnEl.classList.remove('ready');
   document.getElementById('feverOverlay')?.remove();
+  shuffleCooldownUntil = 0;
+  shuffleBtnEl.disabled = false;
 }
 
 function startGame(){
@@ -932,6 +1146,9 @@ function endGame(){
   document.getElementById('resCombo').textContent = maxCombo;
   document.getElementById('resTiles').textContent = tilesCleared;
   document.getElementById('resCoin').textContent = '+' + coinGain;
+  playerNameInput.value = save.playerName || '';
+  submitStatus.textContent = '';
+  submitStatus.className = 'submit-status';
 
   gameScreen.classList.add('hidden');
   resultScreen.classList.remove('hidden');
@@ -1149,6 +1366,45 @@ skillBtnEl.addEventListener('click', () => {
 function allActiveBalls(){
   return balls.filter(b => !b.bomb && !b.clearing);
 }
+
+/* ===================== SHUFFLE ===================== */
+const shuffleBtnEl = document.getElementById('shuffleBtn');
+const SHUFFLE_COOLDOWN_MS = 6000;
+let shuffleCooldownUntil = 0;
+
+function doShuffle(){
+  if(!gameRunning) return;
+  const now = performance.now();
+  if(now < shuffleCooldownUntil) return;
+  shuffleCooldownUntil = now + SHUFFLE_COOLDOWN_MS;
+
+  playSE('shuffle');
+
+  const pool = allActiveBalls();
+  const types = pool.map(b => b.type);
+  shuffleArr(types);
+  pool.forEach((b, i) => {
+    b.type = types[i];
+    const img = b.el.querySelector('img');
+    if(img) img.src = CHARS[b.type].img;
+    // toss the tsum up into the air with a little sideways kick, physics settles it back down
+    b.vy = -(700 + Math.random()*700);
+    b.vx = (Math.random()-0.5)*500;
+  });
+  // give bombs a little toss too, without changing their type
+  balls.filter(b=>b.bomb).forEach(b=>{
+    b.vy = -(600 + Math.random()*500);
+    b.vx = (Math.random()-0.5)*400;
+  });
+
+  updateShuffleButtonState();
+  setTimeout(updateShuffleButtonState, SHUFFLE_COOLDOWN_MS + 50);
+}
+function updateShuffleButtonState(){
+  const ready = performance.now() >= shuffleCooldownUntil;
+  shuffleBtnEl.disabled = !ready;
+}
+shuffleBtnEl.addEventListener('click', () => { playSE('button'); doShuffle(); });
 
 function useSkill(){
   playSE('skill');
