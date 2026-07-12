@@ -309,12 +309,57 @@
   @keyframes reveal{ from{ transform:scale(0) rotate(-30deg); opacity:0;} to{ transform:scale(1) rotate(0); opacity:1;} }
   .gacha-result-name{ font-size:18px; font-weight:900; color:var(--pink-deep); }
   .gacha-result-sub{ font-size:12px; color:#a58a76; margin-top:2px; }
-  .gacha-spin{
-    width:130px;height:130px;margin:10px auto;border-radius:50%;
-    background:conic-gradient(var(--pink) 0 25%, var(--sky) 25% 50%, var(--gold) 50% 75%, var(--lavender) 75% 100%);
-    animation:spin .5s linear infinite;
+
+  /* ---------- Gachapon machine animation ---------- */
+  .gacha-machine{ width:170px; height:150px; margin:4px auto 0; position:relative; }
+  .machine-dome{
+    width:120px; height:78px; margin:0 auto;
+    border-radius:60px 60px 18px 18px/54px 54px 18px 18px;
+    background:radial-gradient(circle at 35% 25%, rgba(255,255,255,0.95), rgba(200,230,250,0.6) 60%, rgba(160,200,230,0.55));
+    border:3px solid #fff; box-shadow:var(--card-shadow);
+    position:relative; overflow:hidden;
   }
-  @keyframes spin{ to{ transform:rotate(360deg);} }
+  .dome-capsule{ position:absolute; width:18px; height:18px; border-radius:50%; }
+  .dome-capsule.c1{ background:linear-gradient(180deg,#ff8fab 50%,#fff 50%); top:12px; left:14px; }
+  .dome-capsule.c2{ background:linear-gradient(180deg,#a8dcf0 50%,#fff 50%); top:8px; left:48px; }
+  .dome-capsule.c3{ background:linear-gradient(180deg,#ffc857 50%,#fff 50%); top:18px; left:78px; }
+  .dome-capsule.c4{ background:linear-gradient(180deg,#c9b6e4 50%,#fff 50%); top:32px; left:34px; }
+  .machine-neck{ width:24px; height:12px; margin:0 auto; background:#fff; border-left:3px solid #e8ddcf; border-right:3px solid #e8ddcf; }
+  .machine-body{
+    width:136px; height:60px; margin:0 auto; position:relative;
+    background:linear-gradient(180deg,#ff9dbb,var(--pink-deep));
+    border-radius:16px; box-shadow:var(--card-shadow);
+  }
+  .machine-crank{ position:absolute; right:-13px; top:14px; width:26px; height:26px; }
+  .crank-knob{ width:100%; height:100%; border-radius:50%; background:#fff; box-shadow:0 2px 0 rgba(0,0,0,0.15); position:relative; }
+  .crank-knob::after{ content:""; position:absolute; width:10px; height:4px; background:var(--pink-deep); border-radius:2px; top:11px; left:13px; }
+  .machine.turning .crank-knob{ animation:crankTurn 0.75s linear; }
+  @keyframes crankTurn{ to{ transform:rotate(360deg); } }
+  .machine-slot{ position:absolute; bottom:6px; left:50%; transform:translateX(-50%); width:34px; height:7px; background:#5b4636; border-radius:4px; opacity:0.35; }
+
+  .capsule-drop-zone{ position:relative; height:40px; margin-top:-2px; }
+  .capsule{ position:absolute; left:50%; top:-40px; width:42px; height:42px; transform:translateX(-50%); opacity:0; }
+  .capsule.falling{ animation:capsuleDrop 0.65s cubic-bezier(.5,0,.7,1) forwards; }
+  @keyframes capsuleDrop{
+    0%{ top:-40px; opacity:0; }
+    15%{ opacity:1; }
+    70%{ top:22px; }
+    85%{ top:10px; }
+    100%{ top:16px; }
+  }
+  .capsule-half{ position:absolute; left:0; width:42px; height:21px; transition: transform .35s ease, opacity .35s ease; }
+  .capsule-top{ top:0; background:linear-gradient(180deg,#fff,#ffe1ec); border-radius:21px 21px 0 0; }
+  .capsule-bottom{ top:21px; background:#fff; border-radius:0 0 21px 21px; box-shadow:var(--card-shadow); }
+  .capsule-char-img{
+    position:absolute; left:50%; top:50%; width:32px; height:32px;
+    transform:translate(-50%,-50%) scale(0); object-fit:contain; opacity:0;
+    transition:transform .4s cubic-bezier(.2,1.6,.4,1), opacity .3s ease;
+  }
+  .capsule.cracked .capsule-top{ transform:translateY(-15px) rotate(-25deg); opacity:0.15; }
+  .capsule.cracked .capsule-bottom{ transform:translateY(10px) rotate(10deg); opacity:0.15; }
+  .capsule.cracked .capsule-char-img{ transform:translate(-50%,-62%) scale(2.3); opacity:1; }
+
+  .gacha-status-text{ text-align:center; font-size:12px; color:#a58a76; margin-top:6px; font-weight:700; }
 
   ::-webkit-scrollbar{ display:none; }
 </style>
@@ -675,10 +720,49 @@ gachaBtn.addEventListener('click', () => {
     return;
   }
   save.coins -= GACHA_COST;
-  gachaCardInner.innerHTML = `<div class="gacha-spin"></div><div class="gacha-result-sub">ガチャガチャ中...</div>`;
+
+  const pick = CHARS[Math.floor(Math.random()*CHARS.length)];
+
+  gachaCardInner.innerHTML = `
+    <div class="gacha-machine machine turning">
+      <div class="machine-dome">
+        <div class="dome-capsule c1"></div>
+        <div class="dome-capsule c2"></div>
+        <div class="dome-capsule c3"></div>
+        <div class="dome-capsule c4"></div>
+      </div>
+      <div class="machine-neck"></div>
+      <div class="machine-body">
+        <div class="machine-crank"><div class="crank-knob"></div></div>
+        <div class="machine-slot"></div>
+      </div>
+    </div>
+    <div class="capsule-drop-zone">
+      <div class="capsule" id="gachaCapsule">
+        <div class="capsule-half capsule-top"></div>
+        <img class="capsule-char-img" id="gachaCapsuleImg" src="${pick.img}">
+        <div class="capsule-half capsule-bottom"></div>
+      </div>
+    </div>
+    <div class="gacha-status-text" id="gachaStatusText">ガチャガチャ中...</div>
+  `;
   gachaModal.classList.remove('hidden');
+
+  const capsuleEl = document.getElementById('gachaCapsule');
+  const statusText = document.getElementById('gachaStatusText');
+
   setTimeout(() => {
-    const pick = CHARS[Math.floor(Math.random()*CHARS.length)];
+    playSE('shuffle');
+    capsuleEl.classList.add('falling');
+  }, 750);
+
+  setTimeout(() => {
+    playSE('gacha');
+    capsuleEl.classList.add('cracked');
+    statusText.textContent = 'なにが出るかな...?';
+  }, 750+650);
+
+  setTimeout(() => {
     let leveledUp = false;
     if(save.owned[pick.id]){
       if(save.owned[pick.id].level < 5){ save.owned[pick.id].level++; leveledUp = true; }
@@ -687,7 +771,6 @@ gachaBtn.addEventListener('click', () => {
       save.owned[pick.id] = { count:1, level:1 };
     }
     persistSave();
-    playSE('gacha');
     gachaCardInner.innerHTML = `
       <div style="font-size:12px;color:#a58a76;font-weight:700;">GET!</div>
       <img class="gacha-reveal-img" src="${pick.img}">
@@ -700,7 +783,7 @@ gachaBtn.addEventListener('click', () => {
       gachaModal.classList.add('hidden');
       renderHome();
     });
-  }, 900);
+  }, 750+650+700);
 });
 
 /* ===================== SETTINGS ===================== */
