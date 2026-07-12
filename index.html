@@ -103,6 +103,9 @@
     font-size:11px; font-weight:800; color:#a58a76; box-shadow:var(--card-shadow);
   }
   .showcase-best b{ color:var(--pink-deep); font-size:13px; }
+  .showcase-best-char{ font-size:10px; color:#a58a76; margin-top:4px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:5px; }
+  .char-icon-sm{ width:18px; height:18px; object-fit:contain; vertical-align:middle; }
+  .char-icon-md{ width:26px; height:26px; object-fit:contain; vertical-align:middle; }
   .section-label{
     font-size:13px; font-weight:800; color:var(--ink); margin:8px 4px 6px;
     display:flex; align-items:center; gap:6px;
@@ -171,7 +174,10 @@
     border-bottom:1px dashed #eee; font-size:13px;
   }
   .rank-row .rank-num{ width:24px; font-weight:900; color:var(--pink-deep); flex:0 0 auto; text-align:center; }
-  .rank-row .rank-name{ flex:1 1 auto; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rank-row .rank-name-wrap{ flex:1 1 auto; min-width:0; overflow:hidden; }
+  .rank-row .rank-name{ display:block; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rank-row .rank-char{ display:block; font-size:9.5px; color:#3aa7a9; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rank-row .rank-char-icon{ width:16px; height:16px; object-fit:contain; vertical-align:middle; margin-right:3px; }
   .rank-row .rank-score{ font-weight:900; color:var(--gold-deep); flex:0 0 auto; }
   .rank-empty{ text-align:center; font-size:12px; color:#b09a89; padding:20px 0; }
 
@@ -383,6 +389,7 @@
     <div class="showcase-info">
       <div class="showcase-name" id="showcaseName"></div>
       <div class="showcase-best">今までのハイスコア <b id="showcaseBest">0</b></div>
+      <div class="showcase-best-char" id="showcaseBestChar"></div>
     </div>
 
     <div class="section-label">つかうツムを えらぶ</div>
@@ -424,6 +431,7 @@
     <div class="result-card">
       <div class="result-title">けっか発表!</div>
       <div class="result-row"><span>スコア</span><span class="v" id="resScore">0</span></div>
+      <div class="result-row"><span>つかったツム</span><span class="v" id="resChar" style="display:flex;align-items:center;gap:6px;"></span></div>
       <div class="result-row"><span>さいだいコンボ</span><span class="v" id="resCombo">0</span></div>
       <div class="result-row"><span>けしたツム数</span><span class="v" id="resTiles">0</span></div>
       <div class="coin-gain"><span class="coin-dot"></span><span id="resCoin">+0</span> コイン獲得</div>
@@ -474,6 +482,7 @@
     <div class="result-row" style="border:none; justify-content:center; gap:6px;">
       <span>あなたのハイスコア:</span><span class="v" id="hsValueDisp">0</span>
     </div>
+    <div id="hsCharDisp" class="showcase-best-char" style="text-align:center;"></div>
     <div class="rank-submit-row">
       <input type="text" id="hsNameInput" placeholder="なまえを入力" maxlength="10">
       <button class="big-btn btn-rank" id="hsSubmitBtn" style="margin-top:8px;">登録する</button>
@@ -532,6 +541,7 @@ let save = {
   owned: { 0: { count:1, level:1 } },
   active: 0,
   highScore: 0,
+  highScoreCharId: 0,
   bgmVolume: 0.6,
   seVolume: 0.8,
   playerName: ''
@@ -564,6 +574,7 @@ async function loadSave(){
   if(!save.owned[0]) save.owned[0] = {count:1,level:1};
   if(typeof save.coins !== 'number') save.coins = 0;
   if(typeof save.highScore !== 'number') save.highScore = 0;
+  if(typeof save.highScoreCharId !== 'number' || !CHARS.find(c=>c.id===save.highScoreCharId)) save.highScoreCharId = 0;
   if(typeof save.bgmVolume !== 'number') save.bgmVolume = 0.6;
   if(typeof save.seVolume !== 'number') save.seVolume = 0.8;
   if(typeof save.playerName !== 'string') save.playerName = '';
@@ -709,6 +720,11 @@ function renderHome(){
   document.getElementById('showcaseImg').src = activeC.img;
   document.getElementById('showcaseName').textContent = activeC.name;
   document.getElementById('showcaseBest').textContent = save.highScore.toLocaleString();
+  const bestChar = CHARS.find(c=>c.id===save.highScoreCharId);
+  const showcaseBestCharEl = document.getElementById('showcaseBestChar');
+  showcaseBestCharEl.innerHTML = (save.highScore > 0 && bestChar)
+    ? `<img class="char-icon-sm" src="${bestChar.img}" alt="${bestChar.name}"> で記録`
+    : '';
   charGrid.innerHTML = '';
   CHARS.forEach(c => {
     const owned = save.owned[c.id];
@@ -869,12 +885,13 @@ async function fetchLeaderboard(){
     return null; // signals a connection/setup failure
   }
 }
-async function submitScoreToLeaderboard(name, scoreVal){
+async function submitScoreToLeaderboard(name, scoreVal, charId){
+  const charInfo = CHARS.find(c=>c.id===charId);
   try{
     const res = await fetch(`${FIREBASE_DB_URL}/scores.json`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, score: scoreVal, ts: Date.now() })
+      body: JSON.stringify({ name, score: scoreVal, charId: charInfo ? charInfo.id : null, charName: charInfo ? charInfo.name : null, ts: Date.now() })
     });
     return res.ok;
   }catch(e){
@@ -893,13 +910,22 @@ function renderRankList(list){
     rankList.innerHTML = '<div class="rank-empty">まだ登録がありません<br>最初の1件を登録してみよう!</div>';
     return;
   }
-  rankList.innerHTML = list.map((e,i)=>`
+  rankList.innerHTML = list.map((e,i)=>{
+    const charInfo = (typeof e.charId === 'number') ? CHARS.find(c=>c.id===e.charId) : null;
+    const charHtml = charInfo
+      ? `<img class="rank-char-icon" src="${charInfo.img}" alt="${charInfo.name}">${escapeHtml(charInfo.name)}`
+      : (e.charName ? escapeHtml(e.charName) : '?');
+    return `
     <div class="rank-row">
       <span class="rank-num">${i+1}</span>
-      <span class="rank-name">${escapeHtml(e.name||'名無し')}</span>
+      <span class="rank-name-wrap">
+        <span class="rank-name">${escapeHtml(e.name||'名無し')}</span>
+        <span class="rank-char">${charHtml}</span>
+      </span>
       <span class="rank-score">${e.score.toLocaleString()}</span>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -939,7 +965,7 @@ submitScoreBtn.addEventListener('click', async () => {
   persistSave();
   submitStatus.textContent = '送信中...';
   submitStatus.className = 'submit-status';
-  const ok = await submitScoreToLeaderboard(name, score);
+  const ok = await submitScoreToLeaderboard(name, score, activeChar.id);
   if(ok){
     submitStatus.textContent = 'ランキングに登録しました!';
     submitStatus.className = 'submit-status ok';
@@ -962,6 +988,10 @@ submitHighScoreBtn.addEventListener('click', () => {
   ensureAudio();
   playSE('button');
   hsValueDisp.textContent = save.highScore.toLocaleString();
+  const bestChar = CHARS.find(c=>c.id===save.highScoreCharId);
+  document.getElementById('hsCharDisp').innerHTML = bestChar
+    ? `<img class="char-icon-sm" src="${bestChar.img}" alt="${bestChar.name}"> で記録`
+    : '';
   hsNameInput.value = save.playerName || '';
   hsSubmitStatus.textContent = '';
   hsSubmitStatus.className = 'submit-status';
@@ -983,7 +1013,7 @@ hsSubmitBtn.addEventListener('click', async () => {
   persistSave();
   hsSubmitStatus.textContent = '送信中...';
   hsSubmitStatus.className = 'submit-status';
-  const ok = await submitScoreToLeaderboard(name, save.highScore);
+  const ok = await submitScoreToLeaderboard(name, save.highScore, save.highScoreCharId);
   if(ok){
     hsSubmitStatus.textContent = 'ランキングに登録しました!';
     hsSubmitStatus.className = 'submit-status ok';
@@ -1259,10 +1289,11 @@ function endGame(){
   clearTimeout(feverEndTimeout);
   const coinGain = Math.floor(score/30);
   save.coins += coinGain;
-  if(score > save.highScore) save.highScore = score;
+  if(score > save.highScore){ save.highScore = score; save.highScoreCharId = activeChar.id; }
   persistSave();
 
   document.getElementById('resScore').textContent = score;
+  document.getElementById('resChar').innerHTML = `<img class="char-icon-md" src="${activeChar.img}" alt="${activeChar.name}">${activeChar.name}`;
   document.getElementById('resCombo').textContent = maxCombo;
   document.getElementById('resTiles').textContent = tilesCleared;
   document.getElementById('resCoin').textContent = '+' + coinGain;
