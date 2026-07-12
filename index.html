@@ -1315,13 +1315,10 @@ function resetHud(){
 function startGame(){
   ensureAudio();
   activeChar = CHARS[save.active];
-  const owned = ownedCharList();
-  const ownedIds = owned.map(c=>c.id);
-  const unownedIds = CHARS.filter(c=>!save.owned[c.id]).map(c=>c.id);
-  shuffleArr(unownedIds);
-  const extraIds = unownedIds.slice(0, 4);
-  unlockedTypeIds = ownedIds.concat(extraIds);
-  if(unlockedTypeIds.length===0) unlockedTypeIds=[0];
+  const pool = CHARS.map(c=>c.id).filter(id => id !== save.active);
+  shuffleArr(pool);
+  const others = pool.slice(0, 4); // fill up to 5 total types with the active one included
+  unlockedTypeIds = [save.active, ...others];
   skillLabelEl.textContent = `スキル: ${activeChar.skillName}`;
 
   homeScreen.classList.add('hidden');
