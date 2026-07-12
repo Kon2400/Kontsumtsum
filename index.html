@@ -472,7 +472,8 @@
     <div class="result-title" style="margin-bottom:10px;">🏆 ランキング</div>
     <div id="rankStatusNote" class="rank-status-note"></div>
     <div id="rankList" class="rank-list"></div>
-    <button class="big-btn btn-play" id="rankCloseBtn" style="margin-top:16px;">とじる</button>
+    <button class="big-btn btn-rank" id="rankCleanupBtn" style="margin-top:12px; font-size:12px; padding:8px;">🧹 同名の重複記録を整理する</button>
+    <button class="big-btn btn-play" id="rankCloseBtn" style="margin-top:10px;">とじる</button>
   </div>
 </div>
 
@@ -885,17 +886,37 @@ async function fetchLeaderboard(){
     return null; // signals a connection/setup failure
   }
 }
+function sanitizeNameKey(name){
+  return name.trim().replace(/[.#$\[\]\/]/g, '_').slice(0, 20);
+}
 async function submitScoreToLeaderboard(name, scoreVal, charId){
+  const key = sanitizeNameKey(name);
+  if(!key) return { ok:false, reason:'invalid' };
   const charInfo = CHARS.find(c=>c.id===charId);
+  const url = `${FIREBASE_DB_URL}/scores/${encodeURIComponent(key)}.json`;
   try{
-    const res = await fetch(`${FIREBASE_DB_URL}/scores.json`, {
-      method: 'POST',
+    const getRes = await fetch(url);
+    if(getRes.ok){
+      const existing = await getRes.json();
+      if(existing && typeof existing.score === 'number' && existing.score >= scoreVal){
+        return { ok:false, reason:'lower', existingScore: existing.score };
+      }
+    }
+    const putRes = await fetch(url, {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, score: scoreVal, charId: charInfo ? charInfo.id : null, charName: charInfo ? charInfo.name : null, ts: Date.now() })
+      body: JSON.stringify({
+        name: name.trim(),
+        score: scoreVal,
+        charId: charInfo ? charInfo.id : null,
+        charName: charInfo ? charInfo.name : null,
+        ts: Date.now()
+      })
     });
-    return res.ok;
+    if(!putRes.ok) return { ok:false, reason:'error' };
+    return { ok:true };
   }catch(e){
-    return false;
+    return { ok:false, reason:'error' };
   }
 }
 
@@ -949,6 +970,52 @@ rankCloseBtn.addEventListener('click', () => {
   rankModal.classList.add('hidden');
 });
 
+const rankCleanupBtn = document.getElementById('rankCleanupBtn');
+async function cleanupLeaderboard(){
+  try{
+    const res = await fetch(`${FIREBASE_DB_URL}/scores.json`);
+    if(!res.ok) return { ok:false };
+    const data = await res.json();
+    if(!data) return { ok:true, count:0 };
+    const byKey = {};
+    Object.values(data).forEach(e=>{
+      if(!e || typeof e.score !== 'number' || !e.name) return;
+      const key = sanitizeNameKey(e.name);
+      if(!key) return;
+      if(!byKey[key] || e.score > byKey[key].score){
+        byKey[key] = {
+          name: String(e.name).trim(),
+          score: e.score,
+          charId: (typeof e.charId === 'number') ? e.charId : null,
+          charName: e.charName || null,
+          ts: e.ts || Date.now()
+        };
+      }
+    });
+    const putRes = await fetch(`${FIREBASE_DB_URL}/scores.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(byKey)
+    });
+    if(!putRes.ok) return { ok:false };
+    return { ok:true, count: Object.keys(byKey).length };
+  }catch(e){
+    return { ok:false };
+  }
+}
+rankCleanupBtn.addEventListener('click', async () => {
+  playSE('button');
+  rankStatusNote.textContent = '整理中...';
+  const result = await cleanupLeaderboard();
+  if(result.ok){
+    rankStatusNote.textContent = `整理が完了しました(${result.count}件のプレイヤー)`;
+    const list = await fetchLeaderboard();
+    renderRankList(list === null ? [] : list);
+  } else {
+    rankStatusNote.textContent = '整理に失敗しました。通信環境をご確認ください。';
+  }
+});
+
 const playerNameInput = document.getElementById('playerNameInput');
 const submitScoreBtn = document.getElementById('submitScoreBtn');
 const submitStatus = document.getElementById('submitStatus');
@@ -965,10 +1032,13 @@ submitScoreBtn.addEventListener('click', async () => {
   persistSave();
   submitStatus.textContent = '送信中...';
   submitStatus.className = 'submit-status';
-  const ok = await submitScoreToLeaderboard(name, score, activeChar.id);
-  if(ok){
+  const result = await submitScoreToLeaderboard(name, score, activeChar.id);
+  if(result.ok){
     submitStatus.textContent = 'ランキングに登録しました!';
     submitStatus.className = 'submit-status ok';
+  } else if(result.reason === 'lower'){
+    submitStatus.textContent = `自己ベスト(${result.existingScore.toLocaleString()})より低いため更新されませんでした`;
+    submitStatus.className = 'submit-status err';
   } else {
     submitStatus.textContent = '登録に失敗しました。通信環境をご確認のうえ、もう一度お試しください。';
     submitStatus.className = 'submit-status err';
@@ -1013,10 +1083,13 @@ hsSubmitBtn.addEventListener('click', async () => {
   persistSave();
   hsSubmitStatus.textContent = '送信中...';
   hsSubmitStatus.className = 'submit-status';
-  const ok = await submitScoreToLeaderboard(name, save.highScore, save.highScoreCharId);
-  if(ok){
+  const result = await submitScoreToLeaderboard(name, save.highScore, save.highScoreCharId);
+  if(result.ok){
     hsSubmitStatus.textContent = 'ランキングに登録しました!';
     hsSubmitStatus.className = 'submit-status ok';
+  } else if(result.reason === 'lower'){
+    hsSubmitStatus.textContent = `自己ベスト(${result.existingScore.toLocaleString()})より低いため更新されませんでした`;
+    hsSubmitStatus.className = 'submit-status err';
   } else {
     hsSubmitStatus.textContent = '登録に失敗しました。通信環境をご確認のうえ、もう一度お試しください。';
     hsSubmitStatus.className = 'submit-status err';
