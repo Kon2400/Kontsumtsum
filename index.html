@@ -1098,7 +1098,7 @@ hsSubmitBtn.addEventListener('click', async () => {
 
 /* ===================== GAME CONSTANTS ===================== */
 const BOMB_THRESHOLD = 7;
-const TIMER_BONUS_THRESHOLD = 25;
+const TIMER_BONUS_THRESHOLD = 30;
 const TIMER_BONUS_SECONDS = 5;
 const GAME_TIME = 60;
 const FEVER_DURATION = 7;
@@ -1169,7 +1169,7 @@ function setupBoardSize(){
   boardEl.style.height = boxH + 'px';
 
   BASE_R = Math.max(24, Math.min(42, boxW/5.8));
-  targetBallCount = Math.max(30, Math.min(90, Math.round(1.275*boxW*boxH/(Math.PI*BASE_R*BASE_R))));
+  targetBallCount = 50; // fixed regardless of screen size, so difficulty is consistent across devices
 }
 
 function resizeBoxOnly(){
