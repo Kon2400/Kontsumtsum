@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>もちもちツム あつめ</title>
 <style>
   :root{
@@ -26,7 +26,6 @@
     color:var(--ink);
     overflow:hidden;
     user-select:none;
-    touch-action:none;
   }
   #app{
     width:100%; height:100%;
@@ -191,7 +190,7 @@
   }
 
   /* ---------- Game screen ---------- */
-  #gameScreen{ padding:8px 10px 6px; }
+  #gameScreen{ padding:8px 10px 6px; touch-action:none; }
   .hud{
     display:flex; align-items:center; justify-content:space-between; gap:8px;
     margin-bottom:6px;
