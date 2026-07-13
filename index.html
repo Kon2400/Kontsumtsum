@@ -71,6 +71,11 @@
   .settings-row{ margin:14px 0; text-align:left; }
   .settings-label{ font-size:12px; font-weight:800; color:var(--ink); margin-bottom:6px; }
   .settings-row input[type="range"]{ width:100%; accent-color:var(--pink-deep); }
+  .settings-row input[type="text"]{
+    width:100%; padding:8px 10px; border-radius:10px; border:2px solid #f1e6da;
+    font-size:13px; font-family:inherit; box-sizing:border-box;
+  }
+  .settings-row input[type="text"]:focus{ outline:none; border-color:var(--pink); }
   .coin-dot{
     width:20px;height:20px;border-radius:50%;
     background:radial-gradient(circle at 35% 30%, #fff4c2, var(--gold) 55%, var(--gold-deep));
@@ -518,6 +523,12 @@
       <div class="settings-label">SE 音量</div>
       <input type="range" id="seVolSlider" min="0" max="100" value="80">
     </div>
+    <div class="settings-row">
+      <div class="settings-label">デバッグコード</div>
+      <input type="text" id="debugCodeInput" placeholder="コードを入力">
+      <button class="big-btn btn-rank" id="debugCodeBtn" style="margin-top:8px; font-size:12px; padding:8px;">適用する</button>
+      <div id="debugCodeStatus" class="submit-status"></div>
+    </div>
     <button class="big-btn btn-play" id="settingsCloseBtn" style="margin-top:18px;">とじる</button>
   </div>
 </div>
@@ -904,6 +915,9 @@ settingsBtn.addEventListener('click', () => {
   playSE('button');
   bgmVolSlider.value = Math.round(save.bgmVolume*100);
   seVolSlider.value = Math.round(save.seVolume*100);
+  debugCodeInput.value = '';
+  debugCodeStatus.textContent = '';
+  debugCodeStatus.className = 'submit-status';
   settingsModal.classList.remove('hidden');
 });
 settingsCloseBtn.addEventListener('click', () => {
@@ -920,6 +934,28 @@ seVolSlider.addEventListener('input', () => {
   updateVolumes();
 });
 seVolSlider.addEventListener('change', () => playSE('button'));
+
+const debugCodeInput = document.getElementById('debugCodeInput');
+const debugCodeBtn = document.getElementById('debugCodeBtn');
+const debugCodeStatus = document.getElementById('debugCodeStatus');
+const DEBUG_UNLOCK_CODE = 'Kon2400';
+
+debugCodeBtn.addEventListener('click', () => {
+  playSE('button');
+  const code = (debugCodeInput.value || '').trim();
+  if(code === DEBUG_UNLOCK_CODE){
+    CHARS.forEach(c => {
+      if(!save.owned[c.id]) save.owned[c.id] = { count:1, level:1 };
+    });
+    persistSave();
+    renderHome();
+    debugCodeStatus.textContent = '全キャラクターを解放しました!';
+    debugCodeStatus.className = 'submit-status ok';
+  } else {
+    debugCodeStatus.textContent = 'コードが違います';
+    debugCodeStatus.className = 'submit-status err';
+  }
+});
 
 /* ===================== LEADERBOARD (Firebase Realtime Database) =====================
    Uses the Firebase Realtime Database REST API directly via fetch() - no SDK needed.
@@ -1195,6 +1231,7 @@ let timeLeft = GAME_TIME;
 let feverGauge = 0, feverActive = false;
 let skillGauge = 0;
 let scoreBoostActive = false, scoreBoostTimeout = null;
+let ivySkillUseCount = 0;
 let scoreBoostEndTime = 0, boostBarInterval = null;
 let timerHandle = null;
 let comboResetHandle = null;
@@ -1369,6 +1406,7 @@ function resetHud(){
   scoreBoostActive = false;
   clearTimeout(scoreBoostTimeout);
   hideBoostBar();
+  ivySkillUseCount = 0;
 }
 
 function startGame(){
@@ -1686,6 +1724,8 @@ function explodeBomb(bomb){
   affected.forEach(b => { b.clearing=true; b.el.classList.add('popping'); });
   bomb.clearing = true; bomb.el.classList.add('popping');
   addFever(affected.length*3);
+  const activeTypeCount = affected.filter(b => b.type === save.active).length;
+  if(activeTypeCount > 0) addSkillGauge(activeTypeCount*8);
   grantTimerBonusIfHuge(affected.length, bomb.x, bomb.y);
   setTimeout(()=>{
     const removed = affected.concat([bomb]);
@@ -1780,8 +1820,10 @@ function useSkill(){
     addScore(targets.length*3, feverActive?2:1);
     if(targets[0]) floatScoreAtXY(targets[0].x, targets[0].y, 'チェンジ!');
   } else if(id===3){
-    // 時間を延長する
-    const add = 8 + level*3;
+    // 時間を延長する(使うたびに延長量が1秒ずつ減る)
+    const base = 8 + level*3;
+    const add = Math.max(1, base - ivySkillUseCount);
+    ivySkillUseCount++;
     timeLeft += add;
     timeValEl.textContent = String(timeLeft);
     floatTimeBonusAtXY(boxW/2, 50, `⏱️ +${add}秒!`);
