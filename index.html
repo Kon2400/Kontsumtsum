@@ -319,6 +319,26 @@
     100%{ opacity:0; transform:translateY(-46px) scale(1); }
   }
 
+  .time-bonus-float{
+    position:absolute; font-weight:900; font-size:22px; color:#3aa7a9;
+    pointer-events:none; animation:timeBonusFloatUp 1.1s cubic-bezier(.2,1.4,.4,1) forwards;
+    text-shadow:0 1px 0 #fff, 0 0 10px rgba(58,167,169,0.5);
+    -webkit-text-stroke:1px #fff;
+    z-index:3000; white-space:nowrap;
+  }
+  @keyframes timeBonusFloatUp{
+    0%{ opacity:0; transform:translateY(6px) scale(0.6); }
+    25%{ opacity:1; transform:translateY(-6px) scale(1.2); }
+    50%{ transform:translateY(-10px) scale(1); }
+    100%{ opacity:0; transform:translateY(-50px) scale(1); }
+  }
+
+  #boostBarWrap{
+    background:#fff; border-radius:10px; padding:5px 10px; box-shadow:var(--card-shadow);
+    margin-bottom:6px;
+  }
+  #boostFill{ background:linear-gradient(90deg,#ffe27a,#f2a90f); }
+
   .quit-row{ text-align:center; margin-top:2px;}
   .quit-btn{ background:none; border:none; color:#b09a89; font-size:11px; text-decoration:underline; }
 
@@ -444,6 +464,10 @@
     <div class="fever-bar-wrap">
       <div class="gauge-title"><span>フィーバー</span></div>
       <div class="gauge-track"><div class="gauge-fill" id="feverFill" style="width:0%"></div></div>
+    </div>
+    <div id="boostBarWrap" class="hidden">
+      <div class="gauge-title"><span>⚔️ スコア2倍中!</span><span id="boostTimeLeft">0s</span></div>
+      <div class="gauge-track"><div class="gauge-fill" id="boostFill" style="width:100%"></div></div>
     </div>
     <div id="boardWrap">
       <div id="board"></div>
@@ -1171,6 +1195,7 @@ let timeLeft = GAME_TIME;
 let feverGauge = 0, feverActive = false;
 let skillGauge = 0;
 let scoreBoostActive = false, scoreBoostTimeout = null;
+let scoreBoostEndTime = 0, boostBarInterval = null;
 let timerHandle = null;
 let comboResetHandle = null;
 let feverEndTimeout = null;
@@ -1343,6 +1368,7 @@ function resetHud(){
   shuffleBtnEl.disabled = false;
   scoreBoostActive = false;
   clearTimeout(scoreBoostTimeout);
+  hideBoostBar();
 }
 
 function startGame(){
@@ -1449,6 +1475,15 @@ function floatComboAtXY(x,y,comboCount){
   boardEl.appendChild(fc);
   setTimeout(()=>fc.remove(), 780);
 }
+function floatTimeBonusAtXY(x,y,text){
+  const ft = document.createElement('div');
+  ft.className = 'time-bonus-float';
+  ft.style.left = (x - 40) + 'px';
+  ft.style.top = (y - 14) + 'px';
+  ft.textContent = text;
+  boardEl.appendChild(ft);
+  setTimeout(()=>ft.remove(), 1150);
+}
 function grantTimerBonusIfHuge(count, x, y){
   if(count < TIMER_BONUS_THRESHOLD) return;
   timeLeft += TIMER_BONUS_SECONDS;
@@ -1504,6 +1539,26 @@ function addSkillGauge(n){
     skillBtnEl.disabled = false;
     skillBtnEl.classList.add('ready');
   }
+}
+
+function showBoostBar(durSec){
+  const wrap = document.getElementById('boostBarWrap');
+  const fill = document.getElementById('boostFill');
+  const timeLbl = document.getElementById('boostTimeLeft');
+  wrap.classList.remove('hidden');
+  clearInterval(boostBarInterval);
+  boostBarInterval = setInterval(()=>{
+    const remainMs = scoreBoostEndTime - performance.now();
+    if(remainMs <= 0 || !gameRunning){ hideBoostBar(); return; }
+    const frac = Math.max(0, Math.min(1, remainMs/(durSec*1000)));
+    fill.style.width = (frac*100) + '%';
+    timeLbl.textContent = Math.ceil(remainMs/1000) + 's';
+  }, 100);
+}
+function hideBoostBar(){
+  clearInterval(boostBarInterval);
+  boostBarInterval = null;
+  document.getElementById('boostBarWrap').classList.add('hidden');
 }
 
 /* ===================== MATCHING LOGIC (free-form, no grid) ===================== */
@@ -1729,7 +1784,7 @@ function useSkill(){
     const add = 8 + level*3;
     timeLeft += add;
     timeValEl.textContent = String(timeLeft);
-    floatScoreAtXY(boxW/2, 40, '+'+add+'秒');
+    floatTimeBonusAtXY(boxW/2, 50, `⏱️ +${add}秒!`);
     playSE('bell');
   } else if(id===4){
     // ランダムにボムを発生させる: swap random tsums in place for bombs
@@ -1760,9 +1815,11 @@ function useSkill(){
     // 一定時間、スコア獲得量が2倍になる
     const dur = 9 + level*3;
     scoreBoostActive = true;
+    scoreBoostEndTime = performance.now() + dur*1000;
     clearTimeout(scoreBoostTimeout);
-    scoreBoostTimeout = setTimeout(()=>{ scoreBoostActive = false; }, dur*1000);
-    floatScoreAtXY(boxW/2, 40, `2倍ブースト!(${dur}秒)`);
+    scoreBoostTimeout = setTimeout(()=>{ scoreBoostActive = false; hideBoostBar(); }, dur*1000);
+    showBoostBar(dur);
+    floatTimeBonusAtXY(boxW/2, 50, `⚔️ 2倍ブースト!(${dur}秒)`);
   }
 }
 function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
