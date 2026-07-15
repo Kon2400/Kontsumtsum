@@ -317,11 +317,13 @@
   @keyframes feverPulse{ from{transform:scale(1) rotate(-3deg);} to{transform:scale(1.12) rotate(3deg);} }
 
   .float-score{
-    position:absolute; font-weight:900; font-size:15px; color:var(--pink-deep);
+    position:absolute; font-weight:900; font-size:38px; color:var(--pink-deep);
     pointer-events:none; animation:floatUp .7s ease forwards;
-    text-shadow:0 1px 0 #fff;
+    text-shadow:0 1px 0 #fff, 0 0 6px rgba(255,255,255,0.8);
+    -webkit-text-stroke:0.5px #fff;
+    z-index:3000;
   }
-  @keyframes floatUp{ from{opacity:1; transform:translateY(0);} to{opacity:0; transform:translateY(-34px);} }
+  @keyframes floatUp{ from{opacity:1; transform:translate(-50%,0);} to{opacity:0; transform:translate(-50%,-34px);} }
   .combo-float{
     position:absolute; font-weight:900; font-size:20px; color:#ff8f2e;
     pointer-events:none; animation:comboFloatUp .75s cubic-bezier(.2,1.4,.4,1) forwards;
@@ -337,12 +339,13 @@
   }
 
   .chain-float{
-    position:absolute; font-weight:900; font-size:13px; color:#8a6dbf;
+    position:absolute; font-weight:900; font-size:30px; color:#8a6dbf;
     pointer-events:none; animation:chainFloatUp .7s ease forwards;
-    text-shadow:0 1px 0 #fff;
+    text-shadow:0 1px 0 #fff, 0 0 6px rgba(255,255,255,0.8);
+    -webkit-text-stroke:0.5px #fff;
     z-index:3000; white-space:nowrap;
   }
-  @keyframes chainFloatUp{ from{opacity:1; transform:translateY(0);} to{opacity:0; transform:translateY(-30px);} }
+  @keyframes chainFloatUp{ from{opacity:1; transform:translate(-50%,0);} to{opacity:0; transform:translate(-50%,-30px);} }
 
   .time-bonus-float{
     position:absolute; font-weight:900; font-size:22px; color:#3aa7a9;
@@ -584,20 +587,23 @@
   <div class="gacha-card" style="max-width:340px;">
     <div class="result-title" style="margin-bottom:10px;">📢 アップデート情報</div>
     <div class="update-modal-content">
-      <div class="update-date">7/12</div>
-      <div class="update-title">アップデート情報①</div>
+      <div class="update-date">7/15</div>
+      <div class="update-title">アップデート情報⑥</div>
       <ul>
-        <li>プレイデータが自動保存されるようになりました。</li>
-        <li>NEW! すずおライオンが新たに加わりました。</li>
-        <li>NEW! 鋼のコン狐も追加されました。</li>
+        <li>アイビーのスキルによる延長時間の最低値を1秒→5秒に変更しました。</li>
+        <li>アップデート情報ボタンを追加しました。今後行われるアップデート内容はここに記載されます。</li>
       </ul>
 
       <div class="update-date">7/13</div>
-      <div class="update-title">アップデート情報②</div>
+      <div class="update-title">アップデート情報⑤</div>
       <ul>
-        <li>キャラの所持数が6を超えるとゲーム難易度が所持数に応じて上がるという謎バグがあったので修正しました。</li>
-        <li>ランキングに何のキャラでその点数を取ったのか表示されるようになりました。</li>
-        <li>ランキングには同名ユーザーの最高点のみが保持されるようになりました。</li>
+        <li>プレイヤースキルが高いとアイビーで無限に得点が取れてしまうため、アイビーのスキルを使うごとに延長される時間が1秒ずつ減少するようにしました。</li>
+        <li>ボムを発動した時に自分のツムが含まれていてもスキルゲージに反映されていないバグを修正しました。</li>
+      </ul>
+      <div class="update-title">アップデート情報④</div>
+      <ul>
+        <li>コーギーとコーギー狐以外のキャラのスキルが視覚的にわかりずらいため、ちょっとしたスキル演出を追加しました。気持ち良くなれます。</li>
+        <li>古い端末だと盤面に表示されるツムの数が少ない問題を解決しました。皆平等になります。</li>
       </ul>
       <div class="update-title">アップデート情報③</div>
       <ul>
@@ -605,22 +611,19 @@
         <li>スキルが連鎖・コンボにカウントされていなかったので修正しました。</li>
         <li>30連鎖以上を起こした時にタイマーが5秒延長されるようになりました。(実質コン狐、エゾモモンガ、すずおライオンの強化)</li>
       </ul>
-      <div class="update-title">アップデート情報④</div>
+      <div class="update-title">アップデート情報②</div>
       <ul>
-        <li>コーギーとコーギー狐以外のキャラのスキルが視覚的にわかりずらいため、ちょっとしたスキル演出を追加しました。気持ち良くなれます。</li>
-        <li>古い端末だと盤面に表示されるツムの数が少ない問題を解決しました。皆平等になります。</li>
-      </ul>
-      <div class="update-title">アップデート情報⑤</div>
-      <ul>
-        <li>プレイヤースキルが高いとアイビーで無限に得点が取れてしまうため、アイビーのスキルを使うごとに延長される時間が1秒ずつ減少するようにしました。</li>
-        <li>ボムを発動した時に自分のツムが含まれていてもスキルゲージに反映されていないバグを修正しました。</li>
+        <li>キャラの所持数が6を超えるとゲーム難易度が所持数に応じて上がるという謎バグがあったので修正しました。</li>
+        <li>ランキングに何のキャラでその点数を取ったのか表示されるようになりました。</li>
+        <li>ランキングには同名ユーザーの最高点のみが保持されるようになりました。</li>
       </ul>
 
-      <div class="update-date">7/15</div>
-      <div class="update-title">アップデート情報⑥</div>
+      <div class="update-date">7/12</div>
+      <div class="update-title">アップデート情報①</div>
       <ul>
-        <li>アイビーのスキルによる延長時間の最低値を1秒→5秒に変更しました。</li>
-        <li>アップデート情報ボタンを追加しました。今後行われるアップデート内容はここに記載されます。</li>
+        <li>プレイデータが自動保存されるようになりました。</li>
+        <li>NEW! すずおライオンが新たに加わりました。</li>
+        <li>NEW! 鋼のコン狐も追加されました。</li>
       </ul>
     </div>
     <button class="big-btn btn-play" id="updateInfoCloseBtn" style="margin-top:14px;">とじる</button>
@@ -1579,7 +1582,7 @@ function addScore(base, mult){
 function floatScoreAtXY(x,y,text){
   const fs = document.createElement('div');
   fs.className = 'float-score';
-  fs.style.left = (x - 14) + 'px';
+  fs.style.left = x + 'px';
   fs.style.top = (y - 14) + 'px';
   fs.textContent = text;
   boardEl.appendChild(fs);
@@ -1598,7 +1601,7 @@ function floatComboAtXY(x,y,comboCount){
 function floatChainAtXY(x,y,chainCount){
   const cf = document.createElement('div');
   cf.className = 'chain-float';
-  cf.style.left = (x - 18) + 'px';
+  cf.style.left = x + 'px';
   cf.style.top = (y - 52) + 'px';
   cf.textContent = `${chainCount}連鎖`;
   boardEl.appendChild(cf);
