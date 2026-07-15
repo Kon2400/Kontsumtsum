@@ -174,6 +174,18 @@
 
   .rank-status-note{ font-size:10.5px; color:#a58a76; text-align:center; margin-bottom:6px; }
   .rank-list{ max-height:320px; overflow-y:auto; text-align:left; }
+  .update-modal-content{
+    max-height:400px; overflow-y:auto; text-align:left;
+    font-size:12.5px; line-height:1.7; color:var(--ink);
+  }
+  .update-date{
+    font-weight:900; color:var(--pink-deep); font-size:14px;
+    margin-top:14px; padding-top:8px; border-top:1px dashed #eee;
+  }
+  .update-date:first-child{ margin-top:0; padding-top:0; border-top:none; }
+  .update-title{ font-weight:800; color:var(--gold-deep); margin-top:6px; margin-bottom:2px; }
+  .update-modal-content ul{ padding-left:18px; margin:2px 0 6px; }
+  .update-modal-content li{ margin-bottom:2px; }
   .rank-row{
     display:flex; align-items:center; gap:8px; padding:7px 4px;
     border-bottom:1px dashed #eee; font-size:13px;
@@ -324,6 +336,14 @@
     100%{ opacity:0; transform:translateY(-46px) scale(1); }
   }
 
+  .chain-float{
+    position:absolute; font-weight:900; font-size:13px; color:#8a6dbf;
+    pointer-events:none; animation:chainFloatUp .7s ease forwards;
+    text-shadow:0 1px 0 #fff;
+    z-index:3000; white-space:nowrap;
+  }
+  @keyframes chainFloatUp{ from{opacity:1; transform:translateY(0);} to{opacity:0; transform:translateY(-30px);} }
+
   .time-bonus-float{
     position:absolute; font-weight:900; font-size:22px; color:#3aa7a9;
     pointer-events:none; animation:timeBonusFloatUp 1.1s cubic-bezier(.2,1.4,.4,1) forwards;
@@ -359,7 +379,7 @@
   .coin-gain{ display:flex; align-items:center; justify-content:center; gap:6px; margin-top:14px; font-size:16px; font-weight:900; color:var(--gold-deep);}
 
   /* ---------- Gacha modal ---------- */
-  #gachaModal, #settingsModal, #rankModal, #hsSubmitModal{
+  #gachaModal, #settingsModal, #rankModal, #hsSubmitModal, #updateInfoModal{
     position:fixed; inset:0; background:rgba(60,40,40,0.55);
     display:flex; align-items:center; justify-content:center; z-index:50;
   }
@@ -455,6 +475,7 @@
     <button class="big-btn btn-gacha" id="gachaBtn">ガチャガチャを ひく <span class="gacha-cost">(100コイン)</span></button>
     <button class="big-btn btn-rank" id="rankBtn">🏆 ランキングを見る</button>
     <button class="big-btn btn-rank" id="submitHighScoreBtn" style="margin-top:8px;">ハイスコアを登録する</button>
+    <button class="big-btn btn-rank" id="updateInfoBtn" style="margin-top:8px;">📢 アップデート情報</button>
 
     <div class="home-footer-note">ゲームで コインを かせいで<br>あたらしい ツムを ガチャで ゲットしよう!</div>
   </div>
@@ -556,6 +577,53 @@
       <div id="hsSubmitStatus" class="submit-status"></div>
     </div>
     <button class="big-btn btn-play" id="hsCloseBtn" style="margin-top:10px;">とじる</button>
+  </div>
+</div>
+
+<div id="updateInfoModal" class="hidden">
+  <div class="gacha-card" style="max-width:340px;">
+    <div class="result-title" style="margin-bottom:10px;">📢 アップデート情報</div>
+    <div class="update-modal-content">
+      <div class="update-date">7/12</div>
+      <div class="update-title">アップデート情報①</div>
+      <ul>
+        <li>プレイデータが自動保存されるようになりました。</li>
+        <li>NEW! すずおライオンが新たに加わりました。</li>
+        <li>NEW! 鋼のコン狐も追加されました。</li>
+      </ul>
+
+      <div class="update-date">7/13</div>
+      <div class="update-title">アップデート情報②</div>
+      <ul>
+        <li>キャラの所持数が6を超えるとゲーム難易度が所持数に応じて上がるという謎バグがあったので修正しました。</li>
+        <li>ランキングに何のキャラでその点数を取ったのか表示されるようになりました。</li>
+        <li>ランキングには同名ユーザーの最高点のみが保持されるようになりました。</li>
+      </ul>
+      <div class="update-title">アップデート情報③</div>
+      <ul>
+        <li>コーギーが強すぎたので他キャラの能力を少しずつ上昇させました。</li>
+        <li>スキルが連鎖・コンボにカウントされていなかったので修正しました。</li>
+        <li>30連鎖以上を起こした時にタイマーが5秒延長されるようになりました。(実質コン狐、エゾモモンガ、すずおライオンの強化)</li>
+      </ul>
+      <div class="update-title">アップデート情報④</div>
+      <ul>
+        <li>コーギーとコーギー狐以外のキャラのスキルが視覚的にわかりずらいため、ちょっとしたスキル演出を追加しました。気持ち良くなれます。</li>
+        <li>古い端末だと盤面に表示されるツムの数が少ない問題を解決しました。皆平等になります。</li>
+      </ul>
+      <div class="update-title">アップデート情報⑤</div>
+      <ul>
+        <li>プレイヤースキルが高いとアイビーで無限に得点が取れてしまうため、アイビーのスキルを使うごとに延長される時間が1秒ずつ減少するようにしました。</li>
+        <li>ボムを発動した時に自分のツムが含まれていてもスキルゲージに反映されていないバグを修正しました。</li>
+      </ul>
+
+      <div class="update-date">7/15</div>
+      <div class="update-title">アップデート情報⑥</div>
+      <ul>
+        <li>アイビーのスキルによる延長時間の最低値を1秒→5秒に変更しました。</li>
+        <li>アップデート情報ボタンを追加しました。今後行われるアップデート内容はここに記載されます。</li>
+      </ul>
+    </div>
+    <button class="big-btn btn-play" id="updateInfoCloseBtn" style="margin-top:14px;">とじる</button>
   </div>
 </div>
 
@@ -939,17 +1007,19 @@ const debugCodeInput = document.getElementById('debugCodeInput');
 const debugCodeBtn = document.getElementById('debugCodeBtn');
 const debugCodeStatus = document.getElementById('debugCodeStatus');
 const DEBUG_UNLOCK_CODE = 'Kon2400';
+const MAX_CHAR_LEVEL = 5;
 
 debugCodeBtn.addEventListener('click', () => {
   playSE('button');
   const code = (debugCodeInput.value || '').trim();
   if(code === DEBUG_UNLOCK_CODE){
     CHARS.forEach(c => {
-      if(!save.owned[c.id]) save.owned[c.id] = { count:1, level:1 };
+      const existing = save.owned[c.id];
+      save.owned[c.id] = { count: existing ? Math.max(existing.count, 1) : 1, level: MAX_CHAR_LEVEL };
     });
     persistSave();
     renderHome();
-    debugCodeStatus.textContent = '全キャラクターを解放しました!';
+    debugCodeStatus.textContent = '全キャラクターをLv.MAXで解放しました!';
     debugCodeStatus.className = 'submit-status ok';
   } else {
     debugCodeStatus.textContent = 'コードが違います';
@@ -1161,6 +1231,18 @@ submitHighScoreBtn.addEventListener('click', () => {
 hsCloseBtn.addEventListener('click', () => {
   playSE('button');
   hsSubmitModal.classList.add('hidden');
+});
+
+const updateInfoBtn = document.getElementById('updateInfoBtn');
+const updateInfoModal = document.getElementById('updateInfoModal');
+const updateInfoCloseBtn = document.getElementById('updateInfoCloseBtn');
+updateInfoBtn.addEventListener('click', () => {
+  playSE('button');
+  updateInfoModal.classList.remove('hidden');
+});
+updateInfoCloseBtn.addEventListener('click', () => {
+  playSE('button');
+  updateInfoModal.classList.add('hidden');
 });
 hsSubmitBtn.addEventListener('click', async () => {
   playSE('button');
@@ -1513,6 +1595,15 @@ function floatComboAtXY(x,y,comboCount){
   boardEl.appendChild(fc);
   setTimeout(()=>fc.remove(), 780);
 }
+function floatChainAtXY(x,y,chainCount){
+  const cf = document.createElement('div');
+  cf.className = 'chain-float';
+  cf.style.left = (x - 18) + 'px';
+  cf.style.top = (y - 52) + 'px';
+  cf.textContent = `${chainCount}連鎖`;
+  boardEl.appendChild(cf);
+  setTimeout(()=>cf.remove(), 720);
+}
 function floatTimeBonusAtXY(x,y,text){
   const ft = document.createElement('div');
   ft.className = 'time-bonus-float';
@@ -1689,6 +1780,7 @@ function resolveClear(cleared){
   const last = cleared[cleared.length-1];
   floatScoreAtXY(last.x, last.y, '+'+gained);
   floatComboAtXY(last.x, last.y, combo);
+  floatChainAtXY(last.x, last.y, cleared.length);
 
   cleared.forEach(b => { b.clearing = true; b.el.classList.add('popping'); });
 
@@ -1822,7 +1914,7 @@ function useSkill(){
   } else if(id===3){
     // 時間を延長する(使うたびに延長量が1秒ずつ減る)
     const base = 8 + level*3;
-    const add = Math.max(1, base - ivySkillUseCount);
+    const add = Math.max(5, base - ivySkillUseCount);
     ivySkillUseCount++;
     timeLeft += add;
     timeValEl.textContent = String(timeLeft);
