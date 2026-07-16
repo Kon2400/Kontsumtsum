@@ -141,9 +141,13 @@
     background:rgba(120,100,90,0.55); border-radius:50%; font-size:18px; color:#fff;
   }
   .char-info{ flex:1 1 auto; min-width:0; }
-  .char-name-row{ display:flex; align-items:baseline; gap:6px; }
+  .char-name-row{ display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
   .char-name{ font-size:13px; font-weight:800; line-height:1.2;}
   .char-lv{ font-size:10px; color:var(--pink-deep); font-weight:800; white-space:nowrap; }
+  .char-dupe{
+    font-size:9px; color:#fff; font-weight:800; white-space:nowrap;
+    background:var(--gold-deep); border-radius:999px; padding:2px 7px;
+  }
   .char-skill-name{ font-size:10.5px; font-weight:800; color:var(--gold-deep); margin-top:2px; }
   .char-skill-desc{ font-size:10.5px; color:#a58a76; line-height:1.35; margin-top:1px; }
   .char-level-desc{ font-size:9.5px; color:#3aa7a9; line-height:1.35; margin-top:2px; font-weight:700; }
@@ -952,6 +956,7 @@ function renderHome(){
   charGrid.innerHTML = '';
   CHARS.forEach(c => {
     const owned = save.owned[c.id];
+    const dupeCount = owned ? Math.max(0, owned.count - MAX_CHAR_LEVEL) : 0;
     const card = document.createElement('div');
     card.className = 'char-card' + (owned ? '' : ' locked') + (save.active === c.id ? ' active' : '');
     card.innerHTML = `
@@ -963,6 +968,7 @@ function renderHome(){
         <div class="char-name-row">
           <span class="char-name">${c.name}</span>
           <span class="char-lv">${owned ? 'Lv.' + owned.level : '未入手'}</span>
+          ${dupeCount > 0 ? `<span class="char-dupe">被り+${dupeCount}(+${dupeCount}%)</span>` : ''}
         </div>
         <div class="char-skill-name">スキル: ${c.skillName}</div>
         <div class="char-skill-desc">${c.skillDesc}</div>
