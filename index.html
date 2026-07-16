@@ -651,6 +651,7 @@
         <li>NEW! まるドラが新たに加わりました。(くれこ様許諾済み・大感謝)</li>
         <li>鋼のコン狐の能力が以下に変更されました。<br>倍率アップ継続時間は初めからレベルMAXの状態になりました。<br>レベル1ではスコア倍率2倍、レベルMAXではスコア倍率10倍になりました。</li>
         <li>アイビーのスキルはスキルゲージが貯まり次第オートで発動されるようになりました。</li>
+        <li>キャラクターがレベルMAXに到達した後にガチャで被った場合、そのツムを消した時の獲得ポイントが被った回数×1%アップするようになりました。</li>
       </ul>
 
       <div class="update-date">7/15</div>
@@ -1099,6 +1100,15 @@ const debugCodeBtn = document.getElementById('debugCodeBtn');
 const debugCodeStatus = document.getElementById('debugCodeStatus');
 const DEBUG_UNLOCK_CODE = 'Kon2400';
 const MAX_CHAR_LEVEL = 5;
+
+// Once a character reaches Lv.MAX, further gacha duplicates of it instead grant
+// a permanent +1% score bonus each time that tsum type is cleared in-game.
+function dupeBonusMult(charId){
+  const o = save.owned[charId];
+  if(!o) return 1;
+  const excess = Math.max(0, o.count - MAX_CHAR_LEVEL);
+  return 1 + 0.01 * excess;
+}
 
 debugCodeBtn.addEventListener('click', () => {
   playSE('button');
@@ -1978,7 +1988,7 @@ function resolveClear(cleared){
   const type = cleared[0].type;
   const isActiveType = (type === save.active);
   const mult = feverActive ? 2 : (1 + Math.min(combo,10)*0.15);
-  const gained = addScore(cleared.length*10, mult);
+  const gained = addScore(cleared.length*10*dupeBonusMult(type), mult);
   bumpCombo();
   tilesCleared += cleared.length;
   playSE('pop');
@@ -2013,7 +2023,8 @@ function explodeBomb(bomb){
   const blastR = bomb.r*3.4;
   const affected = balls.filter(b => !b.clearing && b!==bomb && Math.hypot(b.x-bomb.x, b.y-bomb.y) <= blastR);
   const mult = feverActive ? 2 : (1+Math.min(combo,10)*0.15);
-  const gained = addScore(affected.length*12, mult);
+  const bombBase = affected.reduce((sum,b) => sum + 12*dupeBonusMult(b.type), 0);
+  const gained = addScore(bombBase, mult);
   bumpCombo();
   tilesCleared += affected.length;
   playSE('bomb');
@@ -2186,7 +2197,8 @@ function skillClearBalls(targets, per){
   targets.forEach(b=>{ b.el.classList.add('skill-highlight'); });
   setTimeout(()=>{
     const mult = feverActive ? 2 : (1 + Math.min(combo,10)*0.15);
-    const gained = addScore(targets.length*per, mult);
+    const skillBase = targets.reduce((sum,b) => sum + per*dupeBonusMult(b.type), 0);
+    const gained = addScore(skillBase, mult);
     tilesCleared += targets.length;
     for(let i=0; i<targets.length; i++) bumpCombo(); // treat each cleared tsum as its own chain step
     addFever(targets.length*2);
