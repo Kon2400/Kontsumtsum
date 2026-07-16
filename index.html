@@ -655,7 +655,7 @@
         <li>NEW! まるドラが新たに加わりました。(くれこ様許諾済み・大感謝)</li>
         <li>鋼のコン狐の能力が以下に変更されました。<br>倍率アップ継続時間は初めからレベルMAXの状態になりました。<br>レベル1ではスコア倍率2倍、レベルMAXではスコア倍率10倍になりました。</li>
         <li>アイビーのスキルはスキルゲージが貯まり次第オートで発動されるようになりました。</li>
-        <li>キャラクターがレベルMAXに到達した後にガチャで被った場合、そのツムを消した時の獲得ポイントが被った回数×1%アップするようになりました。</li>
+        <li>キャラクターがレベルMAXに到達した後にガチャで被った場合、そのツムを消した時の獲得ポイントが被った回数×0.1%アップするようになりました。</li>
       </ul>
 
       <div class="update-date">7/15</div>
@@ -968,7 +968,7 @@ function renderHome(){
         <div class="char-name-row">
           <span class="char-name">${c.name}</span>
           <span class="char-lv">${owned ? 'Lv.' + owned.level : '未入手'}</span>
-          ${dupeCount > 0 ? `<span class="char-dupe">被り+${dupeCount}(+${dupeCount}%)</span>` : ''}
+          ${dupeCount > 0 ? `<span class="char-dupe">被り+${dupeCount}(+${(dupeCount*0.1).toFixed(1)}%)</span>` : ''}
         </div>
         <div class="char-skill-name">スキル: ${c.skillName}</div>
         <div class="char-skill-desc">${c.skillDesc}</div>
@@ -1113,7 +1113,7 @@ function dupeBonusMult(charId){
   const o = save.owned[charId];
   if(!o) return 1;
   const excess = Math.max(0, o.count - MAX_CHAR_LEVEL);
-  return 1 + 0.01 * excess;
+  return 1 + 0.001 * excess;
 }
 
 debugCodeBtn.addEventListener('click', () => {
