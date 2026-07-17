@@ -328,6 +328,22 @@
     100%{ opacity:0; transform:translateY(0) scale(1) rotate(0deg); }
   }
 
+  .squirrel-nibbler{
+    position:absolute; pointer-events:none; z-index:1850;
+    object-fit:contain;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+    animation: squirrelNibble 0.65s cubic-bezier(.3,1.4,.4,1) forwards;
+    transform-origin:center;
+  }
+  @keyframes squirrelNibble{
+    0%{ opacity:0; transform:translate(-30px,-24px) scale(0.4) rotate(-20deg); }
+    20%{ opacity:1; transform:translate(0,0) scale(1.2) rotate(6deg); }
+    35%{ transform:translate(0,0) scale(0.95) rotate(-4deg); }
+    45%{ transform:scale(1.08) rotate(3deg); }
+    75%{ opacity:1; transform:scale(1) rotate(0deg); }
+    100%{ opacity:0; transform:scale(0.6) rotate(0deg); }
+  }
+
   .flame-breath{
     position:absolute; top:0; pointer-events:none; z-index:1750;
     background:linear-gradient(180deg, rgba(255,60,0,0.97), rgba(255,130,0,0.92) 40%, rgba(255,190,60,0.75) 70%, rgba(255,230,150,0) 100%);
@@ -1980,6 +1996,26 @@ function showPawStamp(x, y, radius){
   boardEl.appendChild(paw);
   setTimeout(()=>paw.remove(), 600);
 }
+function showSquirrelEating(targets){
+  // A little squirrel hops onto each targeted tsum and nibbles it away, staggered for a swarm feel.
+  const maxSquirrels = Math.min(targets.length, 26);
+  const chosen = targets.slice(0, maxSquirrels);
+  chosen.forEach((b, i) => {
+    const delay = (i % 8) * 45;
+    setTimeout(() => {
+      const sq = document.createElement('img');
+      sq.src = IMG_tsum1_gray;
+      sq.className = 'squirrel-nibbler';
+      const size = Math.max(32, b.r * 1.6);
+      sq.style.width = size + 'px';
+      sq.style.height = size + 'px';
+      sq.style.left = (b.x - size/2) + 'px';
+      sq.style.top = (b.y - size/2) + 'px';
+      boardEl.appendChild(sq);
+      setTimeout(()=>sq.remove(), 680);
+    }, delay);
+  });
+}
 function showFlameBreath(left, width, height, charRefWidth){
   const flame = document.createElement('div');
   flame.className = 'flame-breath';
@@ -2357,7 +2393,9 @@ function useSkill(){
     const n = 14 + level*6;
     const all = allActiveBalls();
     shuffleArr(all);
-    skillClearBalls(all.slice(0, Math.min(n, all.length)), 14);
+    const targets = all.slice(0, Math.min(n, all.length));
+    showSquirrelEating(targets);
+    skillClearBalls(targets, 14);
   } else if(id===2){
     // 特定のツムに変化させる -> convert random tsums to the active type (doesn't clear)
     const n = 10 + level*3;
@@ -2429,7 +2467,7 @@ function useSkill(){
     showFlameBreath(flameLeft, flameWidth, blastHeight, boxW * 0.26);
     const pool = allActiveBalls();
     const targets = pool.filter(b => b.y <= blastHeight && b.x >= flameLeft && b.x <= flameLeft + flameWidth);
-    skillClearBalls(targets, 17);
+    skillClearBalls(targets, 18);
   }
 }
 function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
