@@ -20,7 +20,7 @@
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
   html,body{
-    margin:0; padding:0; height:100%;
+    margin:0; padding:0; height:100%; height:100dvh;
     font-family:"Hiragino Maru Gothic ProN","Yu Gothic Rounded","M PLUS Rounded 1c",sans-serif;
     background:radial-gradient(circle at 30% 0%, var(--bg-top), var(--bg-bot) 70%);
     color:var(--ink);
@@ -29,11 +29,11 @@
     touch-action:none;
   }
   #app{
-    width:100%; height:100%;
+    width:100%; height:100%; height:100dvh;
     max-width:480px; margin:0 auto;
     position:relative;
     display:flex; flex-direction:column;
-    min-height:100vh;
+    min-height:100vh; min-height:100dvh;
   }
   .screen{
     position:absolute; inset:0;
@@ -1684,7 +1684,7 @@ function setupBoardSize(){
   const gaugeEl = document.querySelector('.fever-bar-wrap');
   const skillEl = document.getElementById('skillWidget');
   const quitEl = document.querySelector('.quit-row');
-  const reserved = (hudEl?.offsetHeight||0) + (gaugeEl?.offsetHeight||0) + (skillEl?.offsetHeight||0) + (quitEl?.offsetHeight||0) + 40;
+  const reserved = (hudEl?.offsetHeight||0) + (gaugeEl?.offsetHeight||0) + (skillEl?.offsetHeight||0) + (quitEl?.offsetHeight||0) + 56;
   boxH = Math.max(220, gs.clientHeight - reserved);
 
   boardEl.style.width = boxW + 'px';
@@ -1703,7 +1703,7 @@ function resizeBoxOnly(){
   const gaugeEl = document.querySelector('.fever-bar-wrap');
   const skillEl = document.getElementById('skillWidget');
   const quitEl = document.querySelector('.quit-row');
-  const reserved = (hudEl?.offsetHeight||0) + (gaugeEl?.offsetHeight||0) + (skillEl?.offsetHeight||0) + (quitEl?.offsetHeight||0) + 40;
+  const reserved = (hudEl?.offsetHeight||0) + (gaugeEl?.offsetHeight||0) + (skillEl?.offsetHeight||0) + (quitEl?.offsetHeight||0) + 56;
   boxH = Math.max(220, gs.clientHeight - reserved);
   boardEl.style.width = boxW + 'px';
   boardEl.style.height = boxH + 'px';
@@ -1867,6 +1867,7 @@ function startGame(){
   timerHandle = setInterval(tick, 1000);
   requestAnimationFrame(physicsLoop);
   playBgm('game');
+  setTimeout(()=>{ if(gameRunning) resizeBoxOnly(); }, 150);
 }
 
 function tick(){
@@ -2506,6 +2507,9 @@ function skillClearBalls(targets, per){
   await loadSave();
   renderHome();
   window.addEventListener('resize', ()=>{ if(gameRunning){ resizeBoxOnly(); } });
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', ()=>{ if(gameRunning){ resizeBoxOnly(); } });
+  }
 })();
 
 </script>
